@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { LoginDTO } from './dto/login.dto';
 import { UsersService } from '../users/users.service';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -16,11 +17,12 @@ export class AuthService {
     async register(createUserDTO: CreateUserDTO) {
         const hashedPassword = await bcrypt.hash(createUserDTO.password, 10);
         const user = await this.usersService.createUser({
-            ...createUserDTO,
+            email: createUserDTO.email,
+            firstName: createUserDTO.firstName,
+            lastName: createUserDTO.lastName,
             password: hashedPassword,
         });
-        const { password, ...result } = user;
-        return result;
+        return this.stripPassword(user);
     }
 
     async login(loginDTO: LoginDTO) {
@@ -34,8 +36,7 @@ export class AuthService {
             email: user.email,
         });
 
-        const { password, ...result } = user;
-        return { accessToken, user: result };
+        return { accessToken, user: this.stripPassword(user) };
     }
 
     async getProfile(userId: number) {
@@ -44,7 +45,15 @@ export class AuthService {
             throw new NotFoundException('User not found');
         }
 
-        const { password, ...result } = user;
-        return result;
+        return this.stripPassword(user);
+    }
+
+    private stripPassword(user: User) {
+        return {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+        };
     }
 }
