@@ -18,6 +18,4 @@ export class User{
     @Column()
     lastName:string;
 
-
-
 }
